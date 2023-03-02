@@ -1,7 +1,8 @@
 BUILD_DIR = build
 SOURCES   = $(wildcard src/*.c)
 OBJECTS   = $(patsubst src/%.c,build/%.o,$(SOURCES)) \
-            $(patsubst driverlib/%.c,build/driverlib/%.o,$(wildcard driverlib/*.c))
+            $(patsubst driverlib/%.c,build/driverlib/%.o,$(wildcard driverlib/*.c)) \
+            build/fm.o
 
 SUPPORT_FILE_DIR = $(MSP430GCC)/include
 
@@ -11,7 +12,7 @@ OBJCOPY = $(MSP430GCC)/bin/msp430-elf-objcopy
 FLASHER = $(MSPFLASHER)/MSP430Flasher
 MAKETXT = srec_cat
 
-CFLAGS  = -I $(SUPPORT_FILE_DIR) -I driverlib -mmcu=$(DEVICE) -O0 -Wall -g
+CFLAGS  = -I $(SUPPORT_FILE_DIR) -I $(abspath driverlib) -mmcu=$(DEVICE) -O0 -Wall -g
 LDFLAGS = -L $(SUPPORT_FILE_DIR) -T $(shell echo $(DEVICE) | tr A-Z a-z).ld -Wl,-Map,$(BUILD_DIR)/$(DEVICE).map,--gc-sections 
 
 .PHONY: clean all upload debug
@@ -20,17 +21,21 @@ all: $(BUILD_DIR)/$(DEVICE).elf $(BUILD_DIR)/$(DEVICE).txt
 
 $(BUILD_DIR)/$(DEVICE).elf: $(OBJECTS)
 	@echo "链接 $^"
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) -o $@ $^
 
 $(OBJECTS): | $(BUILD_DIR) $(BUILD_DIR)/driverlib
 
 $(BUILD_DIR)/%.o: src/%.c
 	@echo "编译 $<"
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) -o $@ $<
+
+$(BUILD_DIR)/%.o: src/%.S
+	@echo "编译 $<"
+	$(CC) -c $(CFLAGS) -o $@ $< 
 
 $(BUILD_DIR)/driverlib/%.o: driverlib/%.c
 	@echo "编译 $<"
-	$(CC) -c $(CFLAGS) -w $< -o $@
+	$(CC) -c $(CFLAGS) -w -o $@ $<
 
 $(BUILD_DIR):
 	@echo "创建构建目录"
