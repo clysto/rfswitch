@@ -6,7 +6,7 @@
 #define R_DATA_PTR    R13
 #define R_BYTE_CNT    R14
 #define R_LOOP_CNT    R15
-; 发射天线连接到 P1.3
+; 发射天线连接到 P1.7
 #define TX_PIN        BIT7
 #define TX_OUT        P1OUT
 
